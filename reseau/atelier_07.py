@@ -16,6 +16,6 @@ print(f"3. Octets inversés + big   : {valeur_inverse_puis_big}")
 print()
 
 if valeur_little == valeur_inverse_puis_big:
-    print("✓ Valeurs 2 et 3 sont identiques.")
+    print("Valeurs 2 et 3 sont identiques.")
 else:
-    print("✗ Valeurs 2 et 3 sont DIFFÉRENTES.")
+    print("Valeurs 2 et 3 sont DIFFÉRENTES.")
