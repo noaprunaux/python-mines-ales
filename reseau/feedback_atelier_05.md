@@ -28,4 +28,4 @@ d'optimisation** demandée par la consigne. À ajouter :
 - Style propre.
 
 ---
-*Évalué sur le commit `9463083` (fichier `atelier_05.py`).*
+*Évalué sur le commit `4aed8fa` (fichier `reseau/atelier_05.py`).*

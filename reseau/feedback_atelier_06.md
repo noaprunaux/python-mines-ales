@@ -29,4 +29,4 @@ le corrigé fait un seul appel pour réduire les syscalls.
   sûr.
 
 ---
-*Évalué sur le commit `0e69491` (fichier `atelier_06.py`).*
+*Évalué sur le commit `4aed8fa` (fichier `reseau/atelier_06.py`).*

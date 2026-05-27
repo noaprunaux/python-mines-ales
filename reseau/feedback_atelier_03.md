@@ -41,4 +41,4 @@ Le reste est correct :
 - Pas de fonction `main()` ni de garde.
 
 ---
-*Évalué sur le commit `9e59673` (fichier `atelier_03.py`).*
+*Évalué sur le commit `4aed8fa` (fichier `reseau/atelier_03.py`).*

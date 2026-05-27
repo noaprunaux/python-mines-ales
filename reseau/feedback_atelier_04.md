@@ -37,4 +37,4 @@ automatiquement, même en cas d'exception non capturée.
   utile.
 
 ---
-*Évalué sur le commit `119b0cb` (fichier `atelier_04.py`).*
+*Évalué sur le commit `4aed8fa` (fichier `reseau/atelier_04.py`).*

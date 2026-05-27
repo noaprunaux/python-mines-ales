@@ -1,5 +1,26 @@
 # Feedback — Atelier 1 (Noa PRUNAUX)
 
+> **Évaluation à jour** : le fichier a été déplacé dans `reseau/`.
+> Le code de fond est inchangé (seul ajout d'une newline finale).
+> Évaluation maintenue.
+
+## Respect de la consigne
+
+Identique à la version précédente — contrat rempli (argument CLI,
+dédup, format conforme).
+
+Toujours en attente : gestion de `socket.gaierror` + validation
+`len(sys.argv)`.
+
+---
+*Évalué sur le commit `15a70e0` (fichier `reseau/atelier_01.py`).*
+
+---
+
+## Évaluation précédente (obsolète, commit `9e59673`)
+
+# Feedback — Atelier 1 (Noa PRUNAUX)
+
 ## Respect de la consigne
 
 Le contrat est rempli :
@@ -35,6 +56,3 @@ Très bonne copie sur le fond.
   `len(sys.argv)` — un domaine inexistant ou un appel sans argument
   fera planter le script.
 - Code lisible, bien aéré.
-
----
-*Évalué sur le commit `9e59673` (fichier `atelier_01.py`).*

@@ -33,4 +33,4 @@ petit entier libre de la table du processus).
   identiques — une boucle aurait évité la duplication.
 
 ---
-*Évalué sur le commit `9e59673` (fichier `atelier_02.py`).*
+*Évalué sur le commit `4aed8fa` (fichier `reseau/atelier_02.py`).*
