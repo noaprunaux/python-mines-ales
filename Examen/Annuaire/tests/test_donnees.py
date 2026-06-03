@@ -34,7 +34,7 @@ def _domaine(hote="example.com"):
     return annuaire.Domaine(
         hote=hote,
         ip="93.184.216.34",
-        contact="Jane Doe",
+        contact="Noa Prunaux",
         email="admin@example.com",
     )
 
@@ -45,7 +45,7 @@ def test_enregistrer_et_chercher(bdd_temporaire):
     assert trouve is not None
     assert trouve.hote == "example.com"
     assert trouve.ip == "93.184.216.34"
-    assert trouve.contact == "Jane Doe"
+    assert trouve.contact == "Noa Prunaux"
     assert str(trouve.email) == "admin@example.com"
 
 
