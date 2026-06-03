@@ -1,0 +1,5 @@
+[tool.pytest.ini_options]
+# Ajoute la racine du projet au sys.path pour que `import annuaire`
+# fonctionne depuis tests/ quel que soit le mode de lancement de pytest.
+pythonpath = ["."]
+testpaths = ["tests"]
