@@ -1,25 +1,5 @@
 #!/usr/bin/env python3
-"""Mini-annuaire de domaines accessible en réseau.
 
-Ce script unique se lance en deux modes via une CLI argparse :
-  - ``serve``  : démarre le serveur d'application (socketserver threadé) ;
-  - ``search``/``record``/``count``/``list`` : agissent comme client réseau.
-
-PROTOCOLE CHOISI — Option C : JSON ligne.
-    Chaque message (requête comme réponse) est un objet JSON UTF-8 terminé par
-    un unique '\\n' (newline-delimited JSON). Requête : {"cmd": "...", "arg": "..."}.
-    Justification : le protocole est *structuré* (pas de parsing ad hoc fragile),
-    se valide naturellement avec Pydantic côté serveur, sérialise sans effort le
-    modèle ``Domaine`` (4 champs) et reste lisible/testable à la main (netcat,
-    `echo '{"cmd":"COUNT"}' | nc ...`). Le seul surcoût est la verbosité, sans
-    conséquence ici. Le framing « une ligne = un message » est trivial et
-    robuste tant que les payloads ne contiennent pas de '\\n' (garanti par
-    json.dumps sur une seule ligne).
-
-Modules/compétences couverts : subprocess (S08), pathlib (S04), Pydantic v2,
-SQLAlchemy ORM, socketserver ThreadingMixIn+TCPServer (R03), sockets bas niveau
-(R00), argparse (S03), logging, .env (S13/bonus).
-"""
 
 from __future__ import annotations
 
