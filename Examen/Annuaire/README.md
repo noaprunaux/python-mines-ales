@@ -1,41 +1,48 @@
-# Mini-annuaire de domaines (Réseaux & Système — Python)
+# Mini-annuaire de domaines
 
-Un mini-annuaire de domaines accessible en réseau. Pour chaque nom d'hôte
-(ex. `mines-ales.fr`), l'application enregistre quatre informations :
+Petit annuaire de domaines qui se parle à travers le réseau. L'idée : tu lui
+donnes un nom d'hôte (par exemple `mines-ales.fr`) et il va chercher tout seul
+quatre infos qu'il garde en base :
 
-- l'**adresse IP** résolue ;
-- le **nom d'hôte** (clé primaire) ;
-- le **contact** déclaré dans `whois` ;
-- l'**adresse email** déclarée dans `whois`.
+- l'adresse IP du domaine ;
+- le nom d'hôte lui-même (c'est la clé, il est unique) ;
+- le contact déclaré dans le `whois` ;
+- l'adresse email déclarée dans le `whois`.
 
-L'application est livrée comme **un seul script Python** (`annuaire.py`)
-lançable en deux modes (serveur ou client) via une CLI unique `argparse`.
+Tout tient dans un seul fichier Python, `annuaire.py`. Selon la commande que tu
+lui passes, il se comporte soit en serveur, soit en client — le tout via une
+petite interface en ligne de commande.
 
-## Architecture
+## Comment c'est organisé
 
 ```
-        CLI (argparse, P5)
-        /              \
-   Serveur (P3) <--JSON ligne--> Client (P4, sockets bas niveau)
-        |
-   Couche données (P2 : SQLAlchemy + Pydantic)
-        |
-   Collecte système (P1 : subprocess nslookup/whois)
+        CLI (argparse)
+        /            \
+   Serveur  <--- JSON ligne --->  Client (sockets bas niveau)
+      |
+   Couche données  (SQLAlchemy + Pydantic)
+      |
+   Collecte système  (nslookup + whois)
 ```
 
-## Installation
+Le client et le serveur ne partagent rien d'autre que le protocole : ils
+pourraient tourner sur deux machines différentes.
 
-### Prérequis système (Debian/Ubuntu)
+## Mise en route
 
-L'outil `whois` doit être installé pour la collecte (`nslookup` est en général
-déjà présent via `dnsutils`) :
+### Côté système (Debian / Ubuntu)
+
+Il faut `whois` pour la collecte. `nslookup` est en général déjà là (sinon il
+arrive avec `dnsutils`) :
 
 ```bash
 sudo apt update
 sudo apt install whois dnsutils
 ```
 
-### Dépendances Python
+### Côté Python
+
+On crée un environnement isolé et on installe les dépendances :
 
 ```bash
 python3 -m venv .venv
@@ -43,98 +50,135 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-`email-validator` est requis par Pydantic pour le type `EmailStr`.
-`python-dotenv` est optionnel (un parseur maison prend le relais s'il manque).
+Deux remarques sur les dépendances : `email-validator` est tiré par Pydantic
+pour valider le type `EmailStr`, et `python-dotenv` est optionnel — si tu ne
+l'installes pas, un petit parseur maison prend le relais pour lire le `.env`.
 
-## Utilisation
+## À l'usage
 
-Lancer le serveur dans un terminal :
+D'abord on lance le serveur dans un terminal :
 
 ```bash
 python annuaire.py serve
-# ou avec plus de logs :
+# ou, si tu veux voir ce qui se passe :
 python annuaire.py -vv serve
 ```
 
-Dans un autre terminal, utiliser le client :
+Puis, dans un autre terminal, on lui parle avec le client :
 
 ```bash
-python annuaire.py record mines-ales.fr   # collecte (IP + whois) puis enregistre
-python annuaire.py search mines-ales.fr   # détails du domaine ou NOT_FOUND
-python annuaire.py count                  # nombre de domaines enregistrés
-python annuaire.py list                   # liste des noms d'hôtes
+python annuaire.py record mines-ales.fr   # va chercher IP + whois, puis enregistre
+python annuaire.py search mines-ales.fr   # affiche le domaine, ou NOT_FOUND
+python annuaire.py count                  # combien de domaines en base
+python annuaire.py list                   # la liste des noms d'hôtes
 ```
 
-### Verbosité (`-v`)
+### Régler le niveau de bavardage (`-v`)
 
-| Flag    | Niveau              | Usage                                   |
-|---------|---------------------|-----------------------------------------|
-| (aucun) | WARNING             | sortie minimale (erreurs seulement)     |
-| `-v`    | INFO                | commande reçue, résultat                |
-| `-vv`   | DEBUG               | parsing whois, framing protocole        |
-| `-vvv`  | DEBUG + format complet | timestamp, fichier, ligne, thread    |
+Plus tu mets de `-v`, plus le programme te raconte ce qu'il fait :
 
-Les logs partent sur **stderr**, les résultats sur **stdout** (convention Unix).
+| Flag    | Niveau                 | Ce que tu vois                         |
+|---------|------------------------|----------------------------------------|
+| (rien)  | WARNING                | quasiment rien, juste les erreurs      |
+| `-v`    | INFO                   | les commandes reçues et leur résultat  |
+| `-vv`   | DEBUG                  | le détail du parsing whois, le framing |
+| `-vvv`  | DEBUG + format complet | en plus : horodatage, fichier, thread  |
 
-### Configuration `.env` (bonus 5.3)
+Les logs partent sur la sortie d'erreur (`stderr`), pour ne pas se mélanger
+avec les résultats qui, eux, sortent sur `stdout`.
 
-Copier `.env.example` en `.env` pour changer l'adresse/port d'écoute :
+### Changer l'adresse ou le port (`.env`)
+
+Par défaut le serveur écoute sur `127.0.0.1:8888`. Pour changer ça, copie
+`.env.example` en `.env` et adapte :
 
 ```
 HOST=0.0.0.0
 PORT=9000
 ```
 
-Valeurs par défaut si aucun `.env` : `127.0.0.1:8888`.
+## Le protocole : du JSON, une ligne par message
 
-## Choix du protocole — Option C : JSON ligne
+J'avais trois options dans le sujet ; j'ai choisi la **C, le JSON ligne**.
+Chaque message — qu'il vienne du client ou du serveur — est un objet JSON sur
+une seule ligne, terminé par un `\n`.
 
-Chaque message (requête comme réponse) est un objet JSON UTF-8 terminé par un
-unique `\n` (*newline-delimited JSON*).
+Côté requête, ça donne par exemple :
 
-- **Requêtes** : `{"cmd": "SEARCH", "arg": "mines-ales.fr"}\n`
-- **Réponses** : `{"status": "OK", "domaine": {...}}\n`, `{"status": "NOT_FOUND"}\n`,
-  `{"status": "ALREADY_EXISTS"}\n`, `{"status": "ERROR", "message": "..."}\n`,
-  `{"status": "OK", "count": 3}\n`, `{"status": "OK", "hotes": [...]}\n`.
+```
+{"cmd": "SEARCH", "arg": "mines-ales.fr"}
+```
 
-**Justification.** Le protocole est *structuré* (pas de parsing ad hoc fragile),
-se valide naturellement côté serveur, sérialise sans effort le modèle `Domaine`
-(4 champs) et reste **lisible et testable à la main** :
+Et côté réponse, selon les cas : `{"status": "OK", "domaine": {...}}`,
+`{"status": "NOT_FOUND"}`, `{"status": "ALREADY_EXISTS"}`,
+`{"status": "OK", "count": 3}`, `{"status": "OK", "hotes": [...]}`, ou
+`{"status": "ERROR", "message": "..."}` en cas de pépin.
+
+**Pourquoi ce choix ?** Honnêtement, c'est celui qui m'a paru le plus propre.
+Le message est structuré, donc pas de parsing fait main à coups de `split` qui
+casse au premier cas tordu. Je peux valider la requête côté serveur sans
+effort, et sérialiser mon modèle `Domaine` (ses 4 champs) directement. Bonus
+appréciable : ça reste lisible à l'œil nu, donc testable à la main avec
+`netcat` :
 
 ```bash
 printf '{"cmd":"COUNT"}\n' | nc 127.0.0.1 8888
 ```
 
-Le seul inconvénient est la verbosité, sans conséquence ici. Le framing
-« une ligne = un message » est trivial et robuste car `json.dumps` n'émet
-jamais de `\n` à l'intérieur du payload.
+Le seul reproche qu'on peut lui faire, c'est d'être un peu verbeux — mais vu la
+taille des messages ici, ça ne change rien. Et le découpage « une ligne = un
+message » marche bien parce que `json.dumps` ne met jamais de retour à la ligne
+au milieu du contenu.
 
-### Commandes du protocole
+### Les commandes comprises par le serveur
 
 | Commande | Argument | Réponse                                                        |
 |----------|----------|----------------------------------------------------------------|
-| `SEARCH` | `<hôte>` | `{"status":"OK","domaine":{...}}` ou `{"status":"NOT_FOUND"}`   |
-| `RECORD` | `<hôte>` | `ALREADY_EXISTS` si connu ; sinon collecte + insert → `OK` / `ERROR` |
-| `COUNT`  | —        | `{"status":"OK","count":<int>}`                                |
-| `LIST`   | —        | `{"status":"OK","hotes":[...]}` (noms d'hôtes seulement)        |
+| `SEARCH` | `<hôte>` | le domaine en JSON, ou `NOT_FOUND`                             |
+| `RECORD` | `<hôte>` | `ALREADY_EXISTS` si déjà connu ; sinon collecte + insert → `OK` (ou `ERROR`) |
+| `COUNT`  | —        | le nombre de domaines enregistrés                              |
+| `LIST`   | —        | la liste des noms d'hôtes, rien de plus                        |
 
-## Tests (bonus)
+## Tester tout ça
+
+### Les tests unitaires
+
+Ils vérifient la couche données (le CRUD) toute seule, sur une base SQLite
+jetable — pas besoin de réseau ni de `whois` :
 
 ```bash
 pip install pytest
 python3 -m pytest -q
 ```
 
-Les tests couvrent la **couche données** (CRUD) en isolation, sur une base
-SQLite temporaire, sans dépendre du réseau ni de la collecte système.
+### Le script qui teste tout d'un coup
 
-## Structure du dépôt
+Pour ne pas avoir à relancer les dix commandes à la main à chaque fois, j'ai
+écrit un petit script bash, `test_manuel.sh`. Il fait tout le boulot : il lance
+les tests unitaires, démarre le serveur en arrière-plan, enchaîne toutes les
+commandes client (record, search, count, list, le cas du doublon, l'hôte
+inconnu…), teste le protocole brut avec `netcat`, vérifie les niveaux de logs,
+contrôle que le client réagit bien quand le serveur est éteint, puis arrête le
+serveur proprement. À la fin il affiche un bilan clair avec le compte des
+tests réussis.
+
+```bash
+chmod +x test_manuel.sh
+./test_manuel.sh                 # teste avec mines-ales.fr
+./test_manuel.sh github.com      # ou un autre hôte de ton choix
+```
+
+Si `whois` ou `netcat` ne sont pas installés, le script ne plante pas : il
+saute simplement l'étape concernée en l'indiquant.
+
+## Ce qu'il y a dans le dépôt
 
 ```
-annuaire.py        # script principal (serveur + client + CLI)
-pyproject.toml     # config pytest (pythonpath)
-requirements.txt   # dépendances Python
-README.md          # ce fichier
-.env.example       # exemple de configuration réseau (bonus)
-tests/             # tests pytest de la couche données (bonus)
+annuaire.py        le programme (serveur + client + CLI)
+test_manuel.sh     le script qui teste tout automatiquement
+tests/             les tests unitaires de la couche données
+pyproject.toml     config pytest (pour que l'import marche)
+requirements.txt   les dépendances Python
+.env.example       exemple de config réseau
+README.md          ce fichier
 ```
